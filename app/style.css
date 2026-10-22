@@ -1,0 +1,106 @@
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #eff8f2;
+  color: #183e2b;
+  font-family: system-ui, Arial, sans-serif;
+}
+
+.wrap {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #13884e;
+  color: white;
+  padding: 18px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 25px;
+}
+
+header span {
+  font-size: 12px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #d5e8d9;
+  padding: 22px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 14px #113b2010;
+}
+
+.card h1 {
+  font-size: 36px;
+  color: #13884e;
+  margin: 12px 0;
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+.stats {
+  display: flex;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.stats > div {
+  flex: 1;
+  background: #f0f9f2;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.transaction {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e4eee6;
+}
+
+.transaction p {
+  margin: 5px 0 0;
+  color: #64796b;
+  font-size: 13px;
+}
+
+button {
+  background: #13884e;
+  color: white;
+  border: 0;
+  padding: 12px 20px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0e6e3e;
+}
+
+a {
+  color: #13884e;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 13px;
+  color: #64796b;
+}
