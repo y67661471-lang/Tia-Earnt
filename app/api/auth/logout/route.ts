@@ -16,9 +16,12 @@ export async function POST(
   request: NextRequest
 ) {
   if (!allowedOrigin(request)) {
-    return noStoreJson({
-      error: "ORIGIN_NOT_ALLOWED"
-    }, 403);
+    return noStoreJson(
+      {
+        error: "ORIGIN_NOT_ALLOWED"
+      },
+      403
+    );
   }
 
   try {
@@ -27,8 +30,19 @@ export async function POST(
     return noStoreJson({
       ok: true
     });
-  } catch {
-    return noStoreJson({
-      error: "SERVER_ERROR"
-    }, 500);
+  } catch (error) {
+    console.error(
+      "[Logout API]",
+      error instanceof Error
+        ? error.message
+        : "Unknown error"
+    );
+
+    return noStoreJson(
+      {
+        error: "SERVER_ERROR"
+      },
+      500
+    );
   }
+}
