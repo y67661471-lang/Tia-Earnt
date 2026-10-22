@@ -4,11 +4,11 @@ import "./style.css";
 
 export const metadata: Metadata = {
   title: "Tia Earn",
-  description: "Telegram Mini App",
+  description: "Tia Earn Telegram Mini App"
 };
 
 export default function RootLayout({
-  children,
+  children
 }: {
   children: React.ReactNode;
 }) {
