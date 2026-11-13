@@ -19,13 +19,12 @@ export async function GET() {
       `
       SELECT
         id::text,
-        telegram_id::text,
-        first_name,
-        last_name,
+        telegram_id::text AS "telegramId",
+        first_name AS "firstName",
+        last_name AS "lastName",
         username,
-        photo_url,
-        referral_code,
-        role,
+        photo_url AS "photoUrl",
+        status,
         created_at
       FROM public.users
       WHERE id = $1
