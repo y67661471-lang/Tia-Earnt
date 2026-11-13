@@ -123,7 +123,7 @@ export async function getSessionUserId():
       ON u.id = s.user_id
     WHERE s.token_hash = $1
       AND s.expires_at > NOW()
-      AND u.is_banned = FALSE
+      AND u.status = 'active'
     LIMIT 1
     `,
     [hashToken(token)]
