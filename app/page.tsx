@@ -39,8 +39,8 @@ type Profile = {
   id: string;
   telegramId: string;
   firstName: string;
-  lastName: string;
-  username: string;
+  lastName: string | null;
+  username: string | null;
   status: string;
 };
 
@@ -101,8 +101,8 @@ async function api(url: string, options?: RequestInit) {
 
   const result = await response.json();
 
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || "Request failed");
+  if (!response.ok || result.error) {
+    throw new Error(result.message || result.error || "Request failed");
   }
 
   return result;
