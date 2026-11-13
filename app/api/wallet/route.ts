@@ -19,8 +19,8 @@ export async function GET() {
       `
       SELECT
         balance::text,
-        total_earned::text,
-        total_withdrawn::text,
+        total_earned::text AS "totalEarned",
+        total_withdrawn::text AS "totalWithdrawn",
         updated_at
       FROM public.wallets
       WHERE user_id = $1
