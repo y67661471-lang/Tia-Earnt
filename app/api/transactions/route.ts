@@ -20,8 +20,7 @@ export async function GET() {
       SELECT
         id::text,
         amount::text,
-        type,
-        status,
+        transaction_type AS type,
         description,
         created_at
       FROM public.wallet_transactions
