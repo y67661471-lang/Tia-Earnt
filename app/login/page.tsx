@@ -75,7 +75,7 @@ export default function Login() {
 
     script.setAttribute(
       "data-telegram-login",
-      "TiaEarn_bot"
+      process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "TiaEarn_bot"
     );
 
     script.setAttribute(
@@ -115,9 +115,7 @@ export default function Login() {
         <div ref={containerRef} />
 
         <p className="hint">
-          BotFather-এ /setdomain দিয়ে
-          tia-earnt-pied.vercel.app
-          সেট করুন।
+          Telegram BotFather-এ আপনার অ্যাপের ডোমেইন সেট করা থাকতে হবে।
         </p>
       </section>
     </main>
