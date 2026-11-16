@@ -1,4 +1,3 @@
-
 import { NextRequest } from "next/server";
 
 import {
@@ -15,26 +14,17 @@ import {
 
 export const runtime = "nodejs";
 
-export async function POST(
-  request: NextRequest
-) {
+export async function POST(request: NextRequest) {
   if (!allowedOrigin(request)) {
-    return noStoreJson({
-      error: "ORIGIN_NOT_ALLOWED"
-    }, 403);
+    return noStoreJson({ error: "ORIGIN_NOT_ALLOWED" }, 403);
   }
 
   try {
     const body = await request.json();
-
     const result = verifyMiniApp(body?.initData);
 
     if (!result.ok) {
-      console.warn(
-        "[Telegram Auth] Verification failed:",
-        result.code
-      );
-
+      console.warn("[Telegram Auth] Verification failed:", result.code);
       return noStoreJson({
         error: "TELEGRAM_VERIFICATION_FAILED",
         code: result.code
@@ -42,24 +32,18 @@ export async function POST(
     }
 
     const token = await upsertUserAndSession(
-      result.user
+      result.user,
+      result.startParam
     );
 
     await setSessionCookie(token);
-
-    return noStoreJson({
-      ok: true
-    });
+    return noStoreJson({ ok: true });
   } catch (error) {
     console.error(
       "[Telegram Auth] Server error:",
-      error instanceof Error
-        ? error.message
-        : "unknown"
+      error instanceof Error ? error.message : "unknown"
     );
 
-    return noStoreJson({
-      error: "SERVER_ERROR"
-    }, 500);
+    return noStoreJson({ error: "SERVER_ERROR" }, 500);
   }
 }
