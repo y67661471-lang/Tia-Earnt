@@ -10,6 +10,7 @@ Configure these variables in the hosting environment (never commit real credenti
 - `TELEGRAM_BOT_TOKEN` — bot token used only by server-side Telegram signature verification.
 - `NEXT_PUBLIC_APP_URL` — canonical app origin used by the API origin check.
 - `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` — Telegram bot username without the leading `@`.
+- `ADMIN_TELEGRAM_IDS` — comma-separated numeric Telegram user IDs permitted to access `/admin` and `/api/admin/users`.
 
 ## Database setup
 
@@ -18,6 +19,15 @@ Configure these variables in the hosting environment (never commit real credenti
 3. Restart the app after setting the environment variables.
 
 The referral migration adds unique invite codes and a referral attribution table. It also assigns invite codes to existing accounts.
+
+## Admin controls
+
+1. Apply `20261116_admin_controls.sql` after the referral migration.
+2. Set `ADMIN_TELEGRAM_IDS` to the numeric Telegram ID(s) of trusted administrators. Do not use usernames; keep this variable server-side and never prefix it with `NEXT_PUBLIC_`.
+3. Open `/admin` while signed in with an allowlisted Telegram account. The API independently checks the authenticated session and allowlist on every request.
+4. Admins can block or unblock accounts. Changes are transactional and written to `admin_audit_log`; an admin cannot change their own status. Blocking prevents the account from using its session.
+
+The admin page does not approve tasks, issue rewards, change wallet balances, or make withdrawals. Those workflows remain separate and require their own verification and audit rules.
 
 ## Referral behavior
 
