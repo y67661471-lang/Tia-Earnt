@@ -1,4 +1,3 @@
-
 import "server-only";
 
 import {
@@ -15,47 +14,52 @@ const COOKIE_NAME = "tia_session";
 const MAX_AGE = 60 * 60 * 24 * 30;
 
 function hashToken(token: string): string {
-  return createHash("sha256")
-    .update(token)
-    .digest("hex");
+  return createHash("sha256").update(token).digest("hex");
 }
 
 export async function upsertUserAndSession(
-  user: TelegramUser
+  user: TelegramUser,
+  referralStartParam?: string
 ): Promise<string> {
   const token = randomBytes(32).toString("hex");
+  const generatedReferralCode = randomBytes(8).toString("hex").toUpperCase();
 
   await transaction(async (client) => {
-    const result = await client.query<{ id: string }>(
+    const result = await client.query<{
+      id: string;
+      is_new: boolean;
+    }>(
       `
       INSERT INTO public.users (
         telegram_id,
         first_name,
         last_name,
         username,
-        photo_url
+        photo_url,
+        referral_code
       )
-      VALUES ($1, $2, $3, $4, $5)
-
+      VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (telegram_id)
       DO UPDATE SET
         first_name = EXCLUDED.first_name,
         last_name = EXCLUDED.last_name,
         username = EXCLUDED.username,
-        photo_url = EXCLUDED.photo_url
-
-      RETURNING id
+        photo_url = EXCLUDED.photo_url,
+        updated_at = NOW()
+      RETURNING id, (xmax = 0) AS is_new
       `,
       [
         user.id,
         user.first_name,
         user.last_name ?? null,
         user.username ?? null,
-        user.photo_url ?? null
+        user.photo_url ?? null,
+        generatedReferralCode
       ]
     );
 
     const userId = result.rows[0].id;
+    const isNewUser = result.rows[0].is_new;
 
     await client.query(
       `
@@ -66,6 +70,41 @@ export async function upsertUserAndSession(
       [userId]
     );
 
+    // Only a newly-created Telegram account can be attributed.
+    // The start parameter must originate from verified Telegram initData.
+    if (
+      isNewUser &&
+      referralStartParam &&
+      /^ref_[A-Za-z0-9_-]{6,40}$/.test(referralStartParam)
+    ) {
+      const referralCode = referralStartParam.slice(4);
+      const referrer = await client.query<{ id: string }>(
+        `
+        SELECT id
+        FROM public.users
+        WHERE referral_code = $1
+          AND telegram_id <> $2
+          AND status = 'active'
+        LIMIT 1
+        `,
+        [referralCode, user.id]
+      );
+
+      if (referrer.rows[0]) {
+        await client.query(
+          `
+          INSERT INTO public.referrals (
+            referrer_user_id,
+            referred_user_id
+          )
+          VALUES ($1, $2)
+          ON CONFLICT (referred_user_id) DO NOTHING
+          `,
+          [referrer.rows[0].id, userId]
+        );
+      }
+    }
+
     await client.query(
       `
       INSERT INTO public.auth_sessions (
@@ -73,11 +112,7 @@ export async function upsertUserAndSession(
         token_hash,
         expires_at
       )
-      VALUES (
-        $1,
-        $2,
-        NOW() + INTERVAL '30 days'
-      )
+      VALUES ($1, $2, NOW() + INTERVAL '30 days')
       `,
       [userId, hashToken(token)]
     );
@@ -86,9 +121,7 @@ export async function upsertUserAndSession(
   return token;
 }
 
-export async function setSessionCookie(
-  token: string
-): Promise<void> {
+export async function setSessionCookie(token: string): Promise<void> {
   const cookieStore = await cookies();
 
   cookieStore.set(COOKIE_NAME, token, {
@@ -100,29 +133,22 @@ export async function setSessionCookie(
   });
 }
 
-export async function getSessionUserId():
-  Promise<string | null> {
+export async function getSessionUserId(): Promise<string | null> {
   const cookieStore = await cookies();
-
   const token = cookieStore.get(COOKIE_NAME)?.value;
 
-  if (
-    !token ||
-    !/^[a-f0-9]{64}$/.test(token)
-  ) {
+  if (!token || !/^[a-f0-9]{64}$/.test(token)) {
     return null;
   }
 
-  const result = await db().query<{
-    user_id: string;
-  }>(
+  const result = await db().query<{ user_id: string }>(
     `
     SELECT s.user_id
     FROM public.auth_sessions s
-    JOIN public.users u
-      ON u.id = s.user_id
+    JOIN public.users u ON u.id = s.user_id
     WHERE s.token_hash = $1
       AND s.expires_at > NOW()
+      AND s.revoked_at IS NULL
       AND u.status = 'active'
     LIMIT 1
     `,
@@ -132,8 +158,7 @@ export async function getSessionUserId():
   return result.rows[0]?.user_id ?? null;
 }
 
-export async function clearSession():
-  Promise<void> {
+export async function clearSession(): Promise<void> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
 
