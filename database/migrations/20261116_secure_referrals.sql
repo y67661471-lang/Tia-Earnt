@@ -2,6 +2,11 @@
 ALTER TABLE public.users
   ADD COLUMN IF NOT EXISTS referral_code TEXT;
 
+-- Give existing accounts stable invite codes before enforcing uniqueness.
+UPDATE public.users
+SET referral_code = upper(substr(md5(random()::text || clock_timestamp()::text || id::text), 1, 16))
+WHERE referral_code IS NULL;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_referral_code
   ON public.users(referral_code)
   WHERE referral_code IS NOT NULL;
